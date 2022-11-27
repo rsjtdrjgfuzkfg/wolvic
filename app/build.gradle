@@ -262,6 +262,16 @@ android {
             }
         }
 
+        picooxr {
+            dimension "platform"
+            externalNativeBuild {
+                cmake {
+                    cppFlags " -DPICOOXR -DOPENXR -I" + file("src/openxr/cpp").absolutePath
+                    arguments "-DVR_SDK_LIB=picooxr-lib", "-DPICOOXR=ON", "-DOPENXR=ON"
+                }
+            }
+        }
+
         hvr {
             dimension "platform"
             externalNativeBuild {

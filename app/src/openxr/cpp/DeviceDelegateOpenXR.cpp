@@ -104,8 +104,8 @@ struct DeviceDelegateOpenXR::State {
     }
     layersEnabled = VRBrowser::AreLayersEnabled();
 
-#ifdef OCULUSVR
-    // Adhoc loader required for OpenXR on Oculus
+#if defined(OCULUSVR) || defined(PICOOXR)
+    // Adhoc loader required for OpenXR on Oculus and Pico
     PFN_xrInitializeLoaderKHR initializeLoaderKHR;
     CHECK_XRCMD(xrGetInstanceProcAddr(nullptr, "xrInitializeLoaderKHR", reinterpret_cast<PFN_xrVoidFunction*>(&initializeLoaderKHR)));
     XrLoaderInitInfoAndroidKHR loaderData;
@@ -226,6 +226,21 @@ struct DeviceDelegateOpenXR::State {
     CHECK_MSG(viewCount > 0, "OpenXR unexpected viewCount");
     viewConfig.resize(viewCount, {XR_TYPE_VIEW_CONFIGURATION_VIEW});
     CHECK_XRCMD(xrEnumerateViewConfigurationViews(instance, system, viewConfigType, viewCount, &viewCount, viewConfig.data()));
+
+#ifdef PICOOXR
+    // The Pico 4 is much more capable than it advertises via OpenXR, and the primary device used
+    // with Pico OXR builds. We thus bump resulutions by 1.4 for a drastic improvement in image clarity.
+    if (viewCount > 0) {
+      viewConfig.front().recommendedImageRectWidth *= 1.4f;
+      viewConfig.front().recommendedImageRectHeight *= 1.4f;
+      if (viewConfig.front().recommendedImageRectWidth > viewConfig.front().maxImageRectWidth) {
+        viewConfig.front().recommendedImageRectWidth = viewConfig.front().maxImageRectWidth;
+      }
+      if (viewConfig.front().recommendedImageRectHeight > viewConfig.front().maxImageRectHeight) {
+        viewConfig.front().recommendedImageRectHeight = viewConfig.front().maxImageRectHeight;
+      }
+    }
+#endif
 
     // Cache view buffer (used in xrLocateViews)
     views.resize(viewCount, {XR_TYPE_VIEW});
